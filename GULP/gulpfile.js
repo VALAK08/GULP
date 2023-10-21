@@ -1,20 +1,20 @@
-﻿const gulp = require('gulp');
-const minifyHtml = require('gulp-minify-html');
-const rename = require('gulp-rename');
-const webp = require('gulp-webp');
-const concat = require('gulp-concat');
-const uglify = require('gulp-uglify');
-const cleanCSS = require("gulp-clean-css");
-const sass = require('gulp-sass');
-const clean = require('gulp-clean');
+﻿var gulp = require('gulp'),
+    clean = require('gulp-clean');
+    cleanCSS = require("gulp-clean-css"),
+    concat = require('gulp-concat'),
+    imagemin = require('gulp-imagemin'),
+    minifyHtml = require('gulp-minify-html'),
+    rename = require('gulp-rename'),
+    sass = require('gulp-sass')(require('sass')),
+    uglify = require('gulp-uglify'),
 
 gulp.task('clean:css', function () {
-    return gulp.src('wwwroot/css/site.min.css', { read: false })
+    return gulp.src('wwwroot/css/site.min.css', { read: false, allowEmpty: true })
         .pipe(clean());
 });
 
 gulp.task('clean:js', function () {
-    return gulp.src('wwwroot/js/*.min.js', { read: false })
+    return gulp.src('wwwroot/js/*.min.js', { read: false, allowEmpty: true })
         .pipe(clean());
 });
 
@@ -36,13 +36,14 @@ gulp.task('min:js', function () {
 
 //Images Optimization
 
-function convertToWebP() {
-    return gulp.src('wwwroot/images/*.{jpg,png}')
-        .pipe(webp())
-        .pipe(gulp.dest('dist/images/webp'));
-}
-
-exports.convertToWebP = convertToWebP;
+//Did you forget to signal async completion?
+//Gulp plugin that returns promises
+//A Promise is an object representing the eventual completion or failure of an asynchronous operation
+gulp.task('compress-images',async function () {
+    await gulp.src('wwwroot/images/*.{jpg,png}')
+        .pipe(imagemin())
+        .pipe(gulp.dest('wwwroot/images/compressedImages'))
+});
 
 //HTML Optimization
 gulp.task('minify-html', function () {
@@ -52,7 +53,7 @@ gulp.task('minify-html', function () {
         .pipe(gulp.dest('SharedMinifications'));
 });
 
-// SCSS To CSS
+// SASS To CSS
 function compileSass() {
     return gulp.src('wwwroot/scss/*.scss')
         .pipe(sass().on('error', sass.logError))
@@ -63,8 +64,9 @@ function compileSass() {
 exports.compileSass = compileSass;
 
 gulp.task('default', gulp.series('clean:css', 'min-concat:css', 'clean:js',
-                                 'min:js', convertToWebP, 'minify-html', compileSass));
+    'min:js','compress-images', 'minify-html', compileSass));
 
 gulp.task('minifyCss', gulp.series('clean:css', 'min-concat:css'));
 gulp.task('minifyJs', gulp.series('clean:js', 'min:js'));
 gulp.task('minifyHtml', gulp.series('minify-html'));
+gulp.task('compressImages', gulp.series('compress-images'));
