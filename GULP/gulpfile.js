@@ -70,3 +70,9 @@ gulp.task('minifyCss', gulp.series('clean:css', 'min-concat:css'));
 gulp.task('minifyJs', gulp.series('clean:js', 'min:js'));
 gulp.task('minifyHtml', gulp.series('minify-html'));
 gulp.task('compressImages', gulp.series('compress-images'));
+
+
+//Note(Video Optimization):
+// You can use Gulp in combination with video compression libraries to reduce the file size of videos.
+//Tools like FFmpeg or HandBrake can be integrated into your Gulp workflow to transcode videos 
+//into more efficient formats, adjust bitrate, and reduce video quality to save space.
