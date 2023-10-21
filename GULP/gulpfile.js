@@ -1,24 +1,22 @@
 ﻿const gulp = require('gulp');
 const minifyHtml = require('gulp-minify-html');
 const rename = require('gulp-rename');
-const imagemin = require('gulp-imagemin');
+const webp = require('gulp-webp');
 const concat = require('gulp-concat');
 const uglify = require('gulp-uglify');
 const cleanCSS = require("gulp-clean-css");
-const del = require('del');
-
+const sass = require('gulp-sass');
+const clean = require('gulp-clean');
 
 gulp.task('clean:css', function () {
-    return del([
-        'wwwroot/css/site.min.css'
-    ]);
+    return gulp.src('wwwroot/css/site.min.css', { read: false })
+        .pipe(clean());
 });
 
 gulp.task('clean:js', function () {
-    return del([
-        'wwwroot/js/*.min.js',
-    ]);
-})
+    return gulp.src('wwwroot/js/*.min.js', { read: false })
+        .pipe(clean());
+});
 
 //CSS Optimization
 gulp.task('min-concat:css', function () {
@@ -37,15 +35,14 @@ gulp.task('min:js', function () {
 });
 
 //Images Optimization
-gulp.task('optimize-images', function () {
-    return gulp.src('wwwroot/images/*')
-        .pipe(imagemin([
-            imagemin.mozjpeg({ quality: 75, progressive: true }),
-            imagemin.optipng({ optimizationLevel: 5 }),
-            imagemin.svgo()
-        ]))
-        .pipe(gulp.dest('wwwroot/images/minified'));
-});
+
+function convertToWebP() {
+    return gulp.src('wwwroot/images/*.{jpg,png}')
+        .pipe(webp())
+        .pipe(gulp.dest('dist/images/webp'));
+}
+
+exports.convertToWebP = convertToWebP;
 
 //HTML Optimization
 gulp.task('minify-html', function () {
@@ -55,8 +52,19 @@ gulp.task('minify-html', function () {
         .pipe(gulp.dest('SharedMinifications'));
 });
 
+// SCSS To CSS
+function compileSass() {
+    return gulp.src('wwwroot/scss/*.scss')
+        .pipe(sass().on('error', sass.logError))
+        .pipe(rename('ConvertedCss.css'))
+        .pipe(gulp.dest('wwwroot/css'));
+}
+
+exports.compileSass = compileSass;
+
 gulp.task('default', gulp.series('clean:css', 'min-concat:css', 'clean:js',
-    'min:js', 'optimize-images', 'minify-html'));
+                                 'min:js', convertToWebP, 'minify-html', compileSass));
 
 gulp.task('minifyCss', gulp.series('clean:css', 'min-concat:css'));
-gulp.task('minifyJs', gulp.series('clean:js', 'min-concat:js'));
+gulp.task('minifyJs', gulp.series('clean:js', 'min:js'));
+gulp.task('minifyHtml', gulp.series('minify-html'));
